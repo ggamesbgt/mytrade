@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADRO · Wyckoff Animasi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0f1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 16px;
+        }
+        .card {
+            background: #111927;
+            border-radius: 32px;
+            padding: 24px 24px 32px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px #2a3a4e;
+            transition: 0.3s;
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        h1 small {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #7f8fa3;
+            margin-left: auto;
+        }
+        .canvas-wrapper {
+            background: #0f172a;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px #263445;
+            margin: 16px 0 18px;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 800 / 420;
+            background: #0f172a;
+            cursor: default;
+        }
+        .narasi {
+            background: #1a2538;
+            padding: 16px 20px;
+            border-radius: 18px;
+            border-left: 4px solid #fbbf24;
+            color: #d1dcec;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 12px 0 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+        .narasi strong {
+            color: #facc15;
+            font-weight: 600;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px 28px;
+            justify-content: center;
+            margin-top: 16px;
+            padding: 8px 0 4px;
+            color: #b9c7dd;
+            font-size: 0.8rem;
+            border-top: 1px solid #283447;
+        }
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dot {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 20px;
+        }
+        .dot.gold { background: #fbbf24; box-shadow: 0 0 8px #fbbf2460; }
+        .dot.green { background: #34d399; box-shadow: 0 0 8px #34d39950; }
+        .dot.red { background: #f87171; box-shadow: 0 0 8px #f8717140; }
+        .dot.blue { background: #60a5fa; box-shadow: 0 0 8px #60a5fa40; }
+        .dot.purple { background: #a78bfa; box-shadow: 0 0 8px #a78bfa40; }
+        .badge {
+            background: #1e2a41;
+            padding: 2px 14px;
+            border-radius: 40px;
+            color: #b9c7dd;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .btn {
+            background: #2a3b54;
+            border: none;
+            padding: 6px 18px;
+            border-radius: 60px;
+            color: #e8edf5;
+            font-weight: 500;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            background: #3a506e;
+            transform: scale(1.02);
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary {
+            background: #fbbf24;
+            color: #0b0f1a;
+            font-weight: 600;
+        }
+        .btn-primary:hover { background: #fcd34d; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>
+        🐘 ADRO · Wyckoff
+        <small>Last Point of Support</small>
+    </h1>
+
+    <div class="canvas-wrapper">
+        <canvas id="chartCanvas" width="800" height="420"></canvas>
+    </div>
+
+    <div class="narasi" id="narasiText">
+        <strong>⏳ Konsolidasi</strong> ADRO di Rp2.300 – menguji batas atas. 
+        Tunggu <strong>breakout</strong> terkonfirmasi di atas Rp2.350 dengan volume tinggi, 
+        atau koreksi ke <strong>LPS ideal</strong> Rp2.250–Rp2.280 untuk entry swing.
+    </div>
+
+    <div class="footer">
+        <div class="legend">
+            <span><span class="dot gold"></span> Resistance 2.350</span>
+            <span><span class="dot green"></span> Support / LPS</span>
+            <span><span class="dot red"></span> Rejection</span>
+            <span><span class="dot blue"></span> Harga ADRO</span>
+            <span><span class="dot purple"></span> Volume (rata-rata)</span>
+        </div>
+        <div>
+            <button class="btn" id="resetBtn">⟲ Reset</button>
+            <button class="btn btn-primary" id="playBtn">▶ Putar Narasi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const canvas = document.getElementById('chartCanvas');
+        const ctx = canvas.getContext('2d');
+        const narasi = document.getElementById('narasiText');
+
+        // --- ukuran ---
+        const W = 800, H = 420;
+        const margin = { top: 48, bottom: 48, left: 60, right: 40 };
+        const chartW = W - margin.left - margin.right;
+        const chartH = H - margin.top - margin.bottom;
+
+        // --- data harga (skenario) ---
+        const basePrice = 2300;
+        // titik harga (dalam poin relatif terhadap basePrice)
+        const pricePoints = [
+            { x: 0, y: 0 },           // 2300
+            { x: 0.08, y: 6 },        // 2306
+            { x: 0.18, y: 14 },       // 2314
+            { x: 0.28, y: 20 },       // 2320
+            { x: 0.38, y: 32 },       // 2332
+            { x: 0.48, y: 48 },       // 2348  (mendekati resistance)
+            { x: 0.55, y: 45 },       // 2345  (rejection)
+            { x: 0.62, y: 38 },       // 2338
+            { x: 0.72, y: 28 },       // 2328  (koreksi)
+            { x: 0.80, y: 22 },       // 2322
+            { x: 0.88, y: 18 },       // 2318
+            { x: 0.94, y: 15 },       // 2315  (mendekati support)
+            { x: 1.0, y: 18 },        // 2318  (penutupan)
+        ];
+
+        // resistance & support
+        const RESISTANCE = 2350;
+        const SUPPORT_HIGH = 2280;
+        const SUPPORT_LOW = 2250;
+
+        // --- state animasi ---
+        let progress = 0;             // 0..1
+        let animId = null;
+        let isPlaying = false;
+        let direction = 1;            // 1 maju, -1 mundur (reset)
+
+        // --- fungsi menggambar ---
+        function draw(progressVal) {
+            ctx.clearRect(0, 0, W, H);
+
+            // ---- background grid ----
+            ctx.strokeStyle = '#1e2a3e';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin.left + (i / 10) * chartW;
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, H - margin.bottom);
+                ctx.stroke();
+            }
+            for (let j = 0; j <= 6; j++) {
+                const y = margin.top + (j / 6) * chartH;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(W - margin.right, y);
+                ctx.stroke();
+            }
+
+            // ---- konversi harga ke koordinat canvas ----
+            function priceToY(price) {
+                const minPrice = 2220, maxPrice = 2380;
+                const frac = (price - minPrice) / (maxPrice - minPrice);
+                return margin.top + chartH - (frac * chartH);
+            }
+
+            function xToCanvas(xFrac) {
+                return margin.left + xFrac * chartW;
+            }
+
+            // ---- Gambar Area Support (LPS) ----
+            const supportY1 = priceToY(SUPPORT_HIGH);
+            const supportY2 = priceToY(SUPPORT_LOW);
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.12)';
+            ctx.fillRect(margin.left, supportY1, chartW, supportY2 - supportY1);
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(margin.left, supportY1);
+            ctx.lineTo(W - margin.right, supportY1);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(margin.left, supportY2);
+            ctx.lineTo(W - margin.right, supportY2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#34d399';
+            ctx.font = '11px monospace';
+            ctx.fillText('Support / LPS', margin.left + 10, supportY1 - 8);
+            ctx.fillText('Rp2.250–2.280', margin.left + 10, supportY2 + 18);
+
+            // ---- Gambar Resistance ----
+            const resY = priceToY(RESISTANCE);
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.10)';
+            ctx.fillRect(margin.left, resY - 6, chartW, 12);
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, resY);
+            ctx.lineTo(W - margin.right, resY);
+            ctx.stroke();
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText('RESISTANCE Rp2.350', margin.left + 12, resY - 12);
+
+            // ---- Garis volume (rata-rata) ----
+            const volBaseY = H - margin.bottom - 20;
+            ctx.strokeStyle = '#a78bfa';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 6]);
+            ctx.beginPath();
+            ctx.moveTo(margin.left, volBaseY);
+            ctx.lineTo(W - margin.right, volBaseY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#a78bfa';
+            ctx.font = '10px monospace';
+            ctx.fillText('Vol. rata-rata', W - margin.right - 80, volBaseY - 6);
+
+            // ---- Plot harga (garis) ----
+            const steps = Math.floor(progressVal * (pricePoints.length - 1));
+            const fracStep = (progressVal * (pricePoints.length - 1)) - steps;
+            const totalPoints = steps + (fracStep > 0 ? 1 : 0);
+
+            // kumpulkan titik yang akan digambar
+            let drawPoints = [];
+            for (let i = 0; i <= steps && i < pricePoints.length; i++) {
+                const p = pricePoints[i];
+                const xPos = xToCanvas(p.x);
+                const yPos = priceToY(basePrice + p.y);
+                drawPoints.push({ x: xPos, y: yPos });
+            }
+            // tambahkan interpolasi jika belum sampai akhir
+            if (steps < pricePoints.length - 1 && fracStep > 0) {
+                const p0 = pricePoints[steps];
+                const p1 = pricePoints[steps + 1];
+                const mixX = p0.x + (p1.x - p0.x) * fracStep;
+                const mixY = p0.y + (p1.y - p0.y) * fracStep;
+                const xPos = xToCanvas(mixX);
+                const yPos = priceToY(basePrice + mixY);
+                drawPoints.push({ x: xPos, y: yPos });
+            }
+
+            // gambar garis harga
+            if (drawPoints.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(drawPoints[0].x, drawPoints[0].y);
+                for (let i = 1; i < drawPoints.length; i++) {
+                    ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
+                }
+                ctx.strokeStyle = '#60a5fa';
+                ctx.lineWidth = 3.5;
+                ctx.shadowColor = '#60a5fa60';
+                ctx.shadowBlur = 12;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // titik terakhir (lingkaran)
+                const last = drawPoints[drawPoints.length - 1];
+                ctx.beginPath();
+                ctx.arc(last.x, last.y, 7, 0, 2 * Math.PI);
+                ctx.fillStyle = '#60a5fa';
+                ctx.shadowColor = '#60a5fa90';
+                ctx.shadowBlur = 18;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = 'bold 12px monospace';
+                const priceNow = basePrice + (pricePoints[Math.min(steps, pricePoints.length-1)]?.y || 0);
+                ctx.fillText('Rp' + (basePrice + (drawPoints[drawPoints.length-1]?.y || 0)).toFixed(0), last.x - 20, last.y - 18);
+            }
+
+            // ---- volume bar (simulasi) ----
+            const volData = [0.6, 0.7, 0.9, 1.1, 1.5, 2.0, 1.8, 1.3, 0.9, 0.8, 0.7, 0.6, 0.8];
+            const volMax = 2.2;
+            const barWidth = chartW / volData.length * 0.6;
+            for (let i = 0; i < volData.length && i < drawPoints.length; i++) {
+                const xPos = margin.left + (i / volData.length) * chartW + (chartW / volData.length) * 0.2;
+                const volHeight = (volData[i] / volMax) * 50;
+                const yPos = H - margin.bottom - 6 - volHeight;
+                ctx.fillStyle = (volData[i] > 1.2) ? '#fbbf24' : '#4b5563';
+                ctx.fillRect(xPos, yPos, barWidth, volHeight);
+            }
+
+            // ---- label harga ----
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '11px monospace';
+            ctx.fillText('Rp2.300', margin.left - 10, priceToY(2300) + 4);
+            ctx.fillText('Rp2.350', margin.left - 10, priceToY(2350) + 4);
+            ctx.fillText('Rp2.250', margin.left - 10, priceToY(2250) + 4);
+
+            // ---- judul sumbu ----
+            ctx.fillStyle = '#6b7f96';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('waktu →', W - margin.right - 60, H - 8);
+
+            // ---- update narasi berdasarkan progress ----
+            updateNarasi(progressVal);
+        }
+
+        // ---- Narasi dinamis ----
+        function updateNarasi(p) {
+            const phase = p;
+            let teks = '';
+            if (phase < 0.05) {
+                teks = `⏳ <strong>Konsolidasi</strong> ADRO di Rp2.300 – menguji area batas atas. <br> Tunggu konfirmasi <strong>breakout</strong> atau <strong>rejection</strong>.`;
+            } else if (phase < 0.35) {
+                teks = `📈 Harga bergerak naik menuju <strong>Rp2.350</strong>. <br> ⚠️ Jangan dikejar jika volume <strong>tidak masif</strong> (di atas rata-rata harian).`;
+            } else if (phase < 0.50) {
+                teks = `🔴 <strong>Rejection</strong> di resistance! Harga gagal tembus. <br> Koreksi mulai terbentuk menuju area <strong>support</strong>.`;
+            } else if (phase < 0.75) {
+                teks = `📉 Koreksi berlanjut ke area <strong>Rp2.250 – Rp2.280</strong>. <br> Ini adalah <strong>Last Point of Support (LPS)</strong> yang ideal.`;
+            } else if (phase < 0.92) {
+                teks = `🟢 <strong>LPS terkonfirmasi</strong> – pasang Buy Limit bertahap. <br> Stop Loss kecil, risiko terkendali.`;
+            } else {
+                teks = `🚀 <strong>Breakout</strong> terkonfirmasi di atas Rp2.350 dengan volume tinggi. <br> Fase markup Wyckoff dimulai! Target Rp2.600+`;
+            }
+            narasi.innerHTML = teks;
+        }
+
+        // ---- animasi loop ----
+        function animate() {
+            if (!isPlaying) return;
+            progress += 0.003 * direction;
+            if (progress >= 1) {
+                progress = 1;
+                isPlaying = false;
+                draw(progress);
+                return;
+            }
+            if (progress < 0) progress = 0;
+            draw(progress);
+            animId = requestAnimationFrame(animate);
+        }
+
+        function playAnimation() {
+            if (animId) cancelAnimationFrame(animId);
+            if (progress >= 0.99) {
+                // reset dulu kalau sudah di akhir
+                progress = 0;
+                direction = 1;
+            }
+            isPlaying = true;
+            direction = 1;
+            animate();
+        }
+
+        function resetAnimation() {
+            if (animId) cancelAnimationFrame(animId);
+            isPlaying = false;
+            progress = 0;
+            direction = 1;
+            draw(0);
+            // reset narasi
+            narasi.innerHTML = `⏳ <strong>Konsolidasi</strong> ADRO di Rp2.300 – menguji batas atas. 
+            Tunggu <strong>breakout</strong> terkonfirmasi di atas Rp2.350 dengan volume tinggi, 
+            atau koreksi ke <strong>LPS ideal</strong> Rp2.250–Rp2.280 untuk entry swing.`;
+        }
+
+        // ---- event binding ----
+        document.getElementById('playBtn').addEventListener('click', playAnimation);
+        document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+
+        // ---- draw initial ----
+        draw(0);
+        window.addEventListener('resize', () => { draw(progress); });
+    })();
+</script>
+</body>
+</html>
