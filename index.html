@@ -70,29 +70,29 @@
         let isBreakout = false;
 
         function preload() {
-            // Membuat tekstur gambar menggunakan program grafis bawaan (No External Images Needed)
+            // Pembuatan aset grafis internal tanpa file external gambar
             
-            // 1. Membuat bentuk Gajah Emas (Smart Money)
+            // 1. Membuat Gajah Emas (Smart Money)
             let gajahGraphics = this.make.graphics({ x: 0, y: 0, add: false });
-            gajahGraphics.fillStyle(0xd4af37, 1); // Warna Emas
+            gajahGraphics.fillStyle(0xd4af37, 1); 
             gajahGraphics.fillRoundedRect(0, 10, 80, 50, 10);
-            gajahGraphics.fillStyle(0x00ff7f, 1); // Aksen armor hijau crypto
+            gajahGraphics.fillStyle(0x00ff7f, 1); 
             gajahGraphics.fillRect(20, 10, 40, 15);
             gajahGraphics.fillStyle(0xd4af37, 1);
-            gajahGraphics.fillRect(75, 20, 15, 25); // Belalai
+            gajahGraphics.fillRect(75, 20, 15, 25); 
             gajahGraphics.generateTexture('elephantKey', 95, 60);
 
-            // 2. Membuat bentuk Bola Uang Hijau
+            // 2. Membuat Bola Uang Hijau (Hajar Kanan)
             let moneyGraphics = this.make.graphics({ x: 0, y: 0, add: false });
-            moneyGraphics.fillStyle(0x00ff88, 1); // Hijau menyala
+            moneyGraphics.fillStyle(0x00ff88, 1); 
             moneyGraphics.fillCircle(10, 10, 10);
             moneyGraphics.generateTexture('moneyKey', 20, 20);
 
-            // 3. Membuat bentuk Robot Ritel Nyangkut
+            // 3. Membuat Robot Ritel Nyangkut
             let robotGraphics = this.make.graphics({ x: 0, y: 0, add: false });
-            robotGraphics.fillStyle(0xef4444, 1); // Merah panik
+            robotGraphics.fillStyle(0xef4444, 1); 
             robotGraphics.fillRect(5, 5, 30, 30);
-            robotGraphics.fillStyle(0xffffff, 1); // Mata cemas robot
+            robotGraphics.fillStyle(0xffffff, 1); 
             robotGraphics.fillRect(10, 10, 6, 6);
             robotGraphics.fillRect(24, 10, 6, 6);
             robotGraphics.fillStyle(0x000000, 1);
@@ -100,31 +100,27 @@
             robotGraphics.fillRect(26, 12, 2, 2);
             robotGraphics.generateTexture('robotKey', 40, 40);
 
-            // 4. Membuat bentuk Roket Markup
+            // 4. Membuat Roket Markup
             let rocketGraphics = this.make.graphics({ x: 0, y: 0, add: false });
-            rocketGraphics.fillStyle(0x00ffcc, 1); // Tubuh roket cyan menyala
+            rocketGraphics.fillStyle(0x00ffcc, 1); 
             rocketGraphics.fillTriangle(20, 0, 0, 40, 40, 40);
-            rocketGraphics.fillStyle(0xff6600, 1); // Api pendorong
+            rocketGraphics.fillStyle(0xff6600, 1); 
             rocketGraphics.fillRect(10, 40, 20, 15);
             rocketGraphics.generateTexture('rocketKey', 40, 55);
         }
 
         function create() {
-            // 1. Latar Belakang Garis Tren Pasar (Grid Chart Background)
+            // 1. Latar Belakang Kotak Grafik (Chart Grid)
             let grid = this.add.graphics();
             grid.lineStyle(1, 0x1e293b, 1);
-            for (let i = 0; i < 800; i += 40) {
-                grid.lineBetween(i, 0, i, 600);
-            }
-            for (let j = 0; j < 600; j += 40) {
-                grid.lineBetween(0, j, 800, j);
-            }
+            for (let i = 0; i < 800; i += 40) { grid.lineBetween(i, 0, i, 600); }
+            for (let j = 0; j < 600; j += 40) { grid.lineBetween(0, j, 800, j); }
 
             // 2. Membuat Tembok Resistance Rp2.350
             wall = this.add.container(400, 120);
             let wallBackground = this.add.graphics();
-            wallBackground.fillStyle(0x7f1d1d, 0.8); // Lapisan merah tua kokoh
-            wallBackground.lineStyle(4, 0xef4444, 1);  // Garis luar merah menyala
+            wallBackground.fillStyle(0x7f1d1d, 0.8); 
+            wallBackground.lineStyle(4, 0xef4444, 1);  
             wallBackground.fillRoundedRect(-250, -30, 500, 60, 8);
             wallBackground.strokeRoundedRect(-250, -30, 500, 60, 8);
             
@@ -138,32 +134,32 @@
             this.physics.world.enable(wall);
             wall.body.setImmovable(true);
 
-            // 3. Menghadirkan Robot Ritel di Atas Dinding
+            // 3. Membuat Robot Ritel di Atas Dinding
             retailRobots = this.physics.add.staticGroup();
             for (let x = 200; x <= 600; x += 60) {
                 retailRobots.create(x, 60, 'robotKey');
             }
 
-            // 4. Menghadirkan Karakter Utama: Gajah Emas (Smart Money)
+            // 4. Karakter Gajah Emas
             elephant = this.physics.add.sprite(400, 520, 'elephantKey');
             elephant.setCollideWorldBounds(true);
 
-            // 5. Menghadirkan Roket (Disembunyikan Terlebih Dahulu)
+            // 5. Karakter Roket (Hidden)
             rocket = this.physics.add.sprite(400, 520, 'rocketKey');
             rocket.setVisible(false);
             rocket.setActive(false);
 
-            // 6. Grup Peluru / Senjata Bola Uang
+            // 6. Grup Amunisi Bola Uang
             moneyBalls = this.physics.add.group({
                 defaultKey: 'moneyKey',
                 maxSize: 30
             });
 
-            // 7. Pengaturan Tombol Kontrol (Panah Keyboard & Spasi)
+            // 7. Input Keyboard Controls
             cursors = this.input.keyboard.createCursorKeys();
             fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-            // 8. Tampilan Informasi HUD (Heads-Up Display)
+            // 8. Tampilan Layar HUD Informasi Saham
             supplyText = this.add.text(20, 20, 'OFFER SUPPLY: 500.000 LOT', { 
                 fontSize: '20px', 
                 fill: '#ff4444', 
@@ -182,22 +178,17 @@
                 fill: '#94a3b8' 
             }).setOrigin(0.5);
 
-            // 9. Sistem Deteksi Tabrakan Fisika (Collision & Overlap)
+            // 9. Deteksi Tabrakan
             this.physics.add.overlap(moneyBalls, wall, hitWall, null, this);
         }
 
         function update(time) {
             if (isBreakout) {
-                // Perilaku Fase E: Roket terbang melesat kencang tanpa batas
                 rocket.setVelocityY(-400);
-                if (rocket.y < -50) {
-                    // Reset posisi jika keluar layar untuk demonstrasi terus-menerus
-                    rocket.y = 650;
-                }
+                if (rocket.y < -50) { rocket.y = 650; }
                 return;
             }
 
-            // Kontrol Pergerakan Horisontal Gajah Emas
             if (cursors.left.isDown) {
                 elephant.setVelocityX(-250);
             } else if (cursors.right.isDown) {
@@ -206,18 +197,16 @@
                 elephant.setVelocityX(0);
             }
 
-            // Kontrol Mekanik Menembak Bola Uang (Hajar Kanan)
             if (fireButton.isDown && time > lastFired) {
                 let ball = moneyBalls.get(elephant.x, elephant.y - 30);
                 if (ball) {
                     ball.setActive(true);
                     ball.setVisible(true);
-                    ball.body.velocity.y = -500; // Kecepatan peluru meluncur ke atas
-                    lastFired = time + 150; // Jeda waktu tembakan (milidetik)
+                    ball.body.velocity.y = -500; 
+                    lastFired = time + 150; 
                 }
             }
 
-            // Membersihkan bola uang yang sudah terbang melewati batas atas layar
             moneyBalls.children.each(function(b) {
                 if (b.active && b.y < 0) {
                     b.setActive(false);
@@ -226,30 +215,46 @@
             });
         }
 
-        // Fungsi Aksi Ketika Dinding Penjual Terkena Tembakan Uang Akumulasi
         function hitWall(ball, wallObject) {
             if (!ball.active) return;
             
-            // Matikan bola uang yang menabrak
             ball.setActive(false);
             ball.setVisible(false);
             ball.body.velocity.y = 0;
 
-            // Logika Pengurangan Pasokan Saham Jualan Ritel
             if (supplyLots > 0) {
-                supplyLots -= 12500; // Mengurangi lot per benturan
+                supplyLots -= 12500; 
                 if (supplyLots < 0) supplyLots = 0;
                 supplyText.setText('OFFER SUPPLY: ' + supplyLots.toLocaleString('id-ID') + ' LOT');
-                
-                // Efek Visual Kamera Bergetar Ringan Setiap Terjadi Akumulasi Besar
                 this.cameras.main.shake(100, 0.003);
             }
 
-            // KONDISI BREAKOUT: Ketika Seluruh Suplai Jualan Habis Dilapisi Modal Besar
             if (supplyLots <= 0 && !isBreakout) {
                 isBreakout = true;
-                
-                // 1. Hancurkan seluruh robot ritel penahan tren
                 retailRobots.clear(true, true);
                 
-                // 2. Berikan efek animasi dinding runtuh/hilang
+                this.tweens.add({
+                    targets: wall,
+                    alpha: 0,
+                    scaleY: 0,
+                    duration: 300,
+                    onComplete: () => { wall.destroy(); }
+                });
+
+                elephant.setVisible(false);
+                elephant.setActive(false);
+                
+                rocket.setPosition(elephant.x, elephant.y);
+                rocket.setVisible(true);
+                rocket.setActive(true);
+
+                supplyText.setText('SUPPLY DEPLETED! RARE ASSET 🔥');
+                supplyText.setFill('#00ff88');
+                
+                phaseText.setText('WYCKOFF: PHASE D & E (MARKUP RP2.600) 🚀');
+                phaseText.setFill('#00ffff');
+            }
+        }
+    </script>
+</body>
+</html>
