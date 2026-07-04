@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADRO · Wyckoff Accumulation</title>
+  <!-- Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0d0f14;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, system-ui, sans-serif;
+      padding: 20px;
+    }
+    .card {
+      max-width: 820px;
+      width: 100%;
+      background: #151b22;
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px #2a313c;
+      padding: 24px 24px 18px;
+      transition: all 0.2s;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 14px;
+      color: #d1d9e6;
+    }
+    .chart-header h2 {
+      font-weight: 500;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-header h2 small {
+      font-weight: 400;
+      font-size: 14px;
+      color: #8895aa;
+      margin-left: 4px;
+    }
+    .price-badge {
+      background: #1e2732;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 18px;
+      font-weight: 500;
+      color: #b9e6b9;
+      border: 1px solid #2d3a48;
+      box-shadow: inset 0 1px 0 #2f3d4b;
+    }
+    .price-badge span {
+      color: #b0c7e0;
+      font-weight: 400;
+      font-size: 14px;
+      margin-right: 6px;
+    }
+    .chart-container {
+      position: relative;
+      height: 300px;
+      margin: 6px 0 8px;
+    }
+    canvas {
+      border-radius: 18px;
+      background: #10161d;
+      box-shadow: inset 0 0 0 1px #27303b;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .control-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin: 22px 0 8px;
+    }
+    .btn {
+      background: #1f2937;
+      border: none;
+      border-radius: 60px;
+      padding: 10px 24px;
+      font-weight: 500;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+      color: #e5edf5;
+      box-shadow: 0 4px 0 #0b1016, 0 2px 8px rgba(0,0,0,0.5);
+      border-bottom: 1px solid #374452;
+      transition: all 0.08s linear;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1 1 auto;
+      justify-content: center;
+      min-width: 140px;
+    }
+    .btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #0b1016;
+    }
+    .btn-primary {
+      background: #d97706;
+      border-bottom-color: #f59e0b;
+      color: #0f0f12;
+      font-weight: 600;
+      box-shadow: 0 4px 0 #7a4a0a, 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .btn-primary:active {
+      box-shadow: 0 1px 0 #7a4a0a;
+    }
+    .btn-secondary {
+      background: #0e7c86;
+      border-bottom-color: #2aa9b3;
+      color: #f0fcff;
+      font-weight: 600;
+      box-shadow: 0 4px 0 #06535a, 0 2px 8px rgba(0,0,0,0.6);
+    }
+    .btn-secondary:active {
+      box-shadow: 0 1px 0 #06535a;
+    }
+    .btn-reset {
+      background: #2d3748;
+      border-bottom-color: #4a5a72;
+      color: #bcc8dc;
+    }
+    .btn-reset:active {
+      box-shadow: 0 1px 0 #1e2633;
+    }
+    .legend-note {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #95a7bf;
+      margin: 10px 0 6px;
+      border-top: 1px solid #29323e;
+      padding-top: 14px;
+    }
+    .legend-note span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 10px;
+    }
+    .dot-green { background: #2ecc71; }
+    .dot-orange { background: #f39c12; }
+    .dot-teal { background: #1abc9c; }
+    .dot-pink { background: #e84393; }
+    .badge-lps {
+      background: #1abc9c22;
+      border: 1px dashed #1abc9c88;
+      padding: 2px 10px;
+      border-radius: 24px;
+      color: #7ff0e0;
+    }
+    @media (max-width: 500px) {
+      .card { padding: 16px; }
+      .btn { min-width: 100px; padding: 10px 14px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="chart-header">
+    <h2>
+      ADRO · Wyckoff <small>Accumulation</small>
+    </h2>
+    <div class="price-badge">
+      <span>IDR</span> 2,300 <span style="color:#86b9b0; margin-left:6px;">+0.44%</span>
+    </div>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="adroChart" width="800" height="300"></canvas>
+  </div>
+
+  <div class="control-bar">
+    <button class="btn btn-primary" id="breakoutBtn">🚀 Simulasikan Breakout</button>
+    <button class="btn btn-secondary" id="lpsBtn">📉 Simulasikan Koreksi LPS</button>
+    <button class="btn btn-reset" id="resetBtn">⟲ Reset</button>
+  </div>
+
+  <div class="legend-note">
+    <span><span class="dot dot-green"></span> Breakout confirmed</span>
+    <span><span class="dot dot-orange"></span> Testing resistance</span>
+    <span><span class="dot dot-teal"></span> LPS buy zone</span>
+    <span><span class="dot dot-pink"></span> Fakeout / low vol</span>
+    <span class="badge-lps">⏺ LPS – risk kecil</span>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ----- DOM refs -----
+    const canvas = document.getElementById('adroChart');
+    const ctx = canvas.getContext('2d');
+
+    // ----- DATA (wyckoff accumulation) -----
+    // base labels: 10 periods (sideways + current)
+    const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9', 'P10'];
+    // base price series: starting from downtrend bottom → consolidation → 2300
+    const basePrices = [2220, 2240, 2255, 2265, 2270, 2280, 2285, 2290, 2295, 2300];
+    // volume base (avg ~18-22)
+    const baseVolume = [14, 18, 20, 16, 22, 19, 21, 18, 23, 20];
+
+    // We'll store current state
+    let priceData = [...basePrices];
+    let volumeData = [...baseVolume];
+    let chart = null;
+
+    // markers for LPS zone (semi-transparent rect)
+    const LPS_ZONE = { from: 2250, to: 2280 }; // in price units
+
+    // ----- helper: build chart.js config -----
+    function buildChart(priceArr, volumeArr, extraOpts = {}) {
+      if (chart) chart.destroy();
+
+      // determine colors for line segments (dynamic based on price/volume)
+      const lineColor = extraOpts.lineColor || '#f1c40f';
+      const bgColor = extraOpts.bgColor || 'rgba(241, 196, 15, 0.08)';
+      const borderColor = extraOpts.borderColor || '#f1c40f';
+
+      // volume colors: orange/green based on scenario
+      const volColors = volumeArr.map((v, i) => {
+        // if volume > 30 and price > 2350 => green breakout
+        if (v > 30 && priceArr[i] > 2350) return 'rgba(46, 204, 113, 0.9)';
+        if (v > 30 && priceArr[i] >= 2320) return 'rgba(46, 204, 113, 0.7)';
+        if (v > 28) return 'rgba(243, 156, 18, 0.8)';
+        return 'rgba(180, 190, 210, 0.5)';
+      });
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Volume',
+              data: volumeArr,
+              type: 'bar',
+              yAxisID: 'y1',
+              backgroundColor: volColors,
+              borderColor: volColors.map(c => c.replace('0.9','1').replace('0.8','1').replace('0.7','1').replace('0.5','1')),
+              borderWidth: 1,
+              borderRadius: 4,
+              barPercentage: 0.7,
+              order: 2
+            },
+            {
+              label: 'Price (ADRO)',
+              data: priceArr,
+              type: 'line',
+              yAxisID: 'y',
+              borderColor: borderColor,
+              backgroundColor: bgColor,
+              borderWidth: 3.5,
+              pointBackgroundColor: priceArr.map((p, i) => {
+                if (p > 2350 && volumeArr[i] > 30) return '#2ecc71';
+                if (p >= 2320 && p <= 2350) return '#f39c12';
+                if (p >= 2250 && p <= 2280) return '#1abc9c';
+                return '#d1d9e6';
+              }),
+              pointBorderColor: '#1a232e',
+              pointBorderWidth: 1.5,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+              tension: 0.25,
+              fill: true,
+              order: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1e2732',
+              titleColor: '#e5edf5',
+              bodyColor: '#bcc8dc',
+              borderColor: '#374452',
+              borderWidth: 1,
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.datasetIndex === 0) return `Volume: ${ctx.raw}`;
+                  return `Price: Rp${ctx.raw}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              position: 'left',
+              min: 2180,
+              max: 2420,
+              grid: { color: 'rgba(60, 80, 100, 0.2)', drawBorder: false },
+              ticks: { color: '#9babc0', stepSize: 40, callback: (val) => 'Rp'+val },
+              title: { display: true, text: 'Price (IDR)', color: '#8899b0', font: { size: 10 } }
+            },
+            y1: {
+              position: 'right',
+              min: 0,
+              max: 50,
+              grid: { drawOnChartArea: false, drawBorder: false },
+              ticks: { color: '#9babc0', stepSize: 10 },
+              title: { display: true, text: 'Volume', color: '#8899b0', font: { size: 10 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#9babc0', font: { size: 10 } }
+            }
+          },
+          elements: {
+            line: { tension: 0.2 }
+          }
+        },
+        plugins: [{
+          id: 'lpsZone',
+          beforeDraw: function(chart) {
+            const yScale = chart.scales.y;
+            const xScale = chart.scales.x;
+            if (!yScale || !xScale) return;
+            // LPS zone rect 2250–2280
+            const yMin = yScale.getPixelForValue(LPS_ZONE.from);
+            const yMax = yScale.getPixelForValue(LPS_ZONE.to);
+            const xMin = xScale.getPixelForValue(0) - 6;
+            const xMax = xScale.getPixelForValue(labels.length-1) + 6;
+            if (isNaN(yMin) || isNaN(yMax)) return;
+            const ctx2 = chart.ctx;
+            ctx2.save();
+            ctx2.fillStyle = 'rgba(26, 188, 156, 0.16)';
+            ctx2.strokeStyle = 'rgba(26, 188, 156, 0.5)';
+            ctx2.lineWidth = 1.5;
+            ctx2.setLineDash([6, 8]);
+            ctx2.fillRect(xMin, Math.min(yMin, yMax), xMax - xMin, Math.abs(yMax - yMin));
+            ctx2.strokeRect(xMin, Math.min(yMin, yMax), xMax - xMin, Math.abs(yMax - yMin));
+            ctx2.restore();
+            // label "Ideal Buy Zone (LPS)"
+            ctx2.save();
+            ctx2.font = 'bold 11px Inter, sans-serif';
+            ctx2.fillStyle = '#1abc9c';
+            ctx2.shadowColor = '#0a1a1a';
+            ctx2.shadowBlur = 10;
+            ctx2.fillText('⬇ LPS Buy Zone', xMin + 12, Math.min(yMin, yMax) - 8);
+            ctx2.restore();
+          }
+        }]
+      });
+      return chart;
+    }
+
+    // ----- initial render -----
+    function renderDefault() {
+      priceData = [...basePrices];
+      volumeData = [...baseVolume];
+      buildChart(priceData, volumeData, {
+        lineColor: '#f1c40f',
+        bgColor: 'rgba(241, 196, 15, 0.06)',
+        borderColor: '#f1c40f'
+      });
+    }
+
+    // ----- Skenario 1: Breakout (orange/pink → green) -----
+    function simulateBreakout() {
+      // price moves from 2300 → test 2350, then breakout with high volume
+      const newPrices = [2220, 2240, 2255, 2265, 2270, 2280, 2285, 2310, 2340, 2370];
+      const newVol = [14, 18, 20, 16, 22, 19, 21, 28, 34, 42]; // volume spike at end
+      priceData = newPrices;
+      volumeData = newVol;
+      buildChart(priceData, volumeData, {
+        lineColor: '#2ecc71',
+        bgColor: 'rgba(46, 204, 113, 0.12)',
+        borderColor: '#2ecc71'
+      });
+      // add annotation via plugin? we use the line color + point colors.
+    }
+
+    // ----- Skenario 2: Koreksi ke LPS (teal zone) -----
+    function simulateLPS() {
+      // price drops from 2300 → 2260-2270 (LPS area) then slight bounce
+      const newPrices = [2220, 2240, 2255, 2265, 2270, 2260, 2255, 2270, 2285, 2295];
+      const newVol = [14, 18, 20, 16, 22, 15, 18, 22, 24, 26];
+      priceData = newPrices;
+      volumeData = newVol;
+      buildChart(priceData, volumeData, {
+        lineColor: '#1abc9c',
+        bgColor: 'rgba(26, 188, 156, 0.12)',
+        borderColor: '#1abc9c'
+      });
+    }
+
+    // ----- reset -----
+    function resetChart() {
+      renderDefault();
+    }
+
+    // ----- attach controls -----
+    document.getElementById('breakoutBtn').addEventListener('click', simulateBreakout);
+    document.getElementById('lpsBtn').addEventListener('click', simulateLPS);
+    document.getElementById('resetBtn').addEventListener('click', resetChart);
+
+    // init chart
+    renderDefault();
+
+    // (optional) extra: simulate “fakeout” detection – but we embed via color
+    // we also show dynamic point colors.
+
+    // handle resize
+    window.addEventListener('resize', function() {
+      if (chart) chart.resize();
+    });
+
+    // extra: small text annotation for LPS is drawn via plugin.
+  })();
+</script>
+</body>
+</html>
