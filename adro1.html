@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADRO Wyckoff Live Simulator - 2026</title>
+    <!-- Memuat Library Phaser 3 via CDN Resmi -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0b0f19;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        #game-container {
+            box-shadow: 0 10px 30px rgba(0, 255, 128, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container"></div>
+
+    <script>
+        // Konfigurasi Game Canvas
+        const config = {
+            type: Phaser.AUTO,
+            width: 900,
+            height: 650,
+            parent: 'game-container',
+            backgroundColor: '#0f172a',
+            physics: {
+                default: 'arcade',
+                arcade: { gravity: { y: 0 }, debug: false }
+            },
+            scene: { preload: preload, create: create, update: update }
+        };
+
+        const game = new Phaser.Game(config);
+
+        // State Variables
+        let elephant, rocket, cursors, fireButton, moneyBalls;
+        let lastFired = 0;
+        let resistanceWall, lpsFloor;
+        let supplyLots = 500000;
+        let currentPrice = 2290; // Sesuai harga closing grafik asli
+        
+        let supplyText, priceText, warningText, statusText;
+        let isBreakout = false;
+
+        function preload() {
+            // 1. Membuat Tekstur Gajah Emas (Smart Money)
+            let gajahGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+            gajahGraphics.fillStyle(0xd4af37, 1); 
+            gajahGraphics.fillRoundedRect(0, 10, 80, 50, 10);
+            gajahGraphics.fillStyle(0x00ff7f, 1); 
+            gajahGraphics.fillRect(20, 10, 40, 15);
+            gajahGraphics.fillStyle(0xd4af37, 1);
+            gajahGraphics.fillRect(75, 20, 15, 25); 
+            gajahGraphics.generateTexture('gajah', 95, 60);
+
+            // 2. Membuat Tekstur Bola Dana (Hajar Kanan)
+            let moneyGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+            moneyGraphics.fillStyle(0x00ff88, 1); 
+            moneyGraphics.fillCircle(10, 10, 10);
+            moneyGraphics.generateTexture('dana', 20, 20);
+
+            // 3. Membuat Tekstur Roket (Fase E Markup)
+            let rocketGraphics = this.make.graphics({ x: 0, y: 0, add: false });
+            rocketGraphics.fillStyle(0x00ffff, 1); 
+            rocketGraphics.fillTriangle(20, 0, 0, 40, 40, 40);
+            rocketGraphics.fillStyle(0xffaa00, 1); 
+            rocketGraphics.fillRect(10, 40, 20, 15);
+            rocketGraphics.generateTexture('roket', 40, 55);
+        }
+
+        function create() {
+            // Membuat Grid Grafik Latar Belakang (Seperti TradingView)
+            let grid = this.add.graphics();
+            grid.lineStyle(1, 0x1e293b, 0.7);
+            for (let i = 0; i < 900; i += 50) { grid.lineBetween(i, 0, i, 650); }
+            for (let j = 0; j < 650; j += 50) { grid.lineBetween(0, j, 900, j); }
+
+            // ==========================================
+            // VISUALISASI ZONA ANALISIS TAMBAHAN (1 & 2)
+            // ==========================================
+
+            // KONDISI 1: AREA RESISTANCE KRUSIAL (ZONA MERAH ATAS)
+            // Rentang Rp2.350 - Rp2.400 (Tempat Konfirmasi Breakout / Rejection)
+            let zoneRed = this.add.graphics();
+            zoneRed.fillStyle(0xef4444, 0.15); // Transparan merah tipis
+            zoneRed.lineStyle(2, 0xef4444, 0.8);
+            zoneRed.fillRect(50, 130, 800, 70);
+            zoneRed.strokeRect(50, 130, 800, 70);
+            this.add.text(60, 140, '⚠️ ZONA RESISTANCE KRUSIAL (Rp2.350 - Rp2.400)\nTunggu konfirmasi Breakout Volume masif. Jangan kejar jika volume tipis!', {
+                fontSize: '13px', fill: '#f87171', fontWeight: 'bold'
+            });
+
+            // KONDISI 2: AREA SKENARIO TERBAIK UNTUK SWING (ZONA HIJAU BAWAH)
+            // Rentang Rp2.250 - Rp2.280 (Titik Last Point of Support / LPS)
+            let zoneGreen = this.add.graphics();
+            zoneGreen.fillStyle(0x10b981, 0.15); // Transparan hijau tipis
+            zoneGreen.lineStyle(2, 0x10b981, 0.8);
+            zoneGreen.fillRect(50, 430, 800, 60);
+            zoneGreen.strokeRect(50, 430, 800, 60);
+            this.add.text(60, 440, '🎯 ZONA AMAN SWING: BUY LIMIT AREA (Rp2.250 - Rp2.280)\nTitik Last Point of Support (LPS) Wyckoff. Risiko kerugian (Stop Loss) sangat kecil.', {
+                fontSize: '13px', fill: '#34d399', fontWeight: 'bold'
+            });
+
+            // Gerbang Batas Atas Dinding Penjual (Target Tembak)
+            resistanceWall = this.physics.add.staticImage(450, 195, '').setSize(800, 10);
+
+            // Lantai Support LPS
+            lpsFloor = this.add.container(0, 0);
+
+            // Menghadirkan Karakter Utama: Gajah Emas (Smart Money)
+            // Awal posisi diletakkan di harga sekarang (Rp2.290) di antara zona merah dan hijau
+            elephant = this.physics.add.sprite(450, 350, 'gajah');
+            elephant.setCollideWorldBounds(true);
+
+            // Menghadirkan Roket Fase E
+            rocket = this.physics.add.sprite(450, 350, 'roket').setVisible(false).setActive(false);
+
+            // Grup Bola Dana Tembakan (Aksi Akumulasi)
+            moneyBalls = this.physics.add.group({ defaultKey: 'dana', maxSize: 40 });
+
+            // Kontrol Input
+            cursors = this.input.keyboard.createCursorKeys();
+            fireButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+            // ==========================================
+            // REAL-TIME DASHBOARD (HUD)
+            // ==========================================
+            priceText = this.add.text(30, 30, 'ADRO REAL PRICE: Rp2.290', {
+                fontSize: '22px', fill: '#00ff88', fontFamily: 'monospace', fontWeight: 'bold'
+            });
+
+            supplyText = this.add.text(30, 65, 'RETAIL OFFER SUPPLY: 500.000 LOT', {
+                fontSize: '16px', fill: '#f87171', fontFamily: 'monospace'
+            });
+
+            statusText = this.add.text(500, 30, 'STATE: TESTING UPPER RANGE (PHASE C)', {
+                fontSize: '15px', fill: '#e2e8f0', fontWeight: 'bold'
+            });
+
+            warningText = this.add.text(450, 610, 'Tekan [PANAH] Bergerak ke Atas/Bawah Zona | [SPASI] untuk Akumulasi Dana', {
+                fontSize: '13px', fill: '#94a3b8'
+            }).setOrigin(0.5);
+
+            // Detektor Tembakan Menembus Dinding Penjual
+            this.physics.add.overlap(moneyBalls, resistanceWall, hitResistance, null, this);
+        }
+
+        function update(time) {
+            if (isBreakout) {
+                rocket.setVelocityY(-450);
+                if (rocket.y < -50) { rocket.y = 700; }
+                return;
+            }
+
+            // Kontrol Pergerakan 4 Arah untuk Mensimulasikan Naik Turun Harga Sesuai Analisis
+            if (cursors.left.isDown) { elephant.setVelocityX(-250); }
+            else if (cursors.right.isDown) { elephant.setVelocityX(250); }
+            else { elephant.setVelocityX(0); }
+
+            if (cursors.up.isDown) { 
+                elephant.setVelocityY(-200); 
+            } else if (cursors.down.isDown) { 
+                elephant.setVelocityY(200); 
+            } else { 
+                elephant.setVelocityY(0); 
+            }
+
+            // Real-time kalkulasi indikasi harga berdasarkan koordinat Y karakter gajah
+            // Membantu kreator menunjukkan pergerakan angka saat record video
+            let calculatedPrice = Math.round(2450 - (elephant.y - 130) * 0.45);
+            if (calculatedPrice > 2450) calculatedPrice = 2450;
+            if (calculatedPrice < 2210) calculatedPrice = 2210;
+            
+            if (!isBreakout) {
+                currentPrice = calculatedPrice;
+                priceText.setText('ADRO REAL PRICE: Rp' + currentPrice.toLocaleString('id-ID'));
+            }
+
+            // Aksi Menembakkan Modal Masif (Hajar Kanan)
+            if (fireButton.isDown && time > lastFired) {
+                let ball = moneyBalls.get(elephant.x, elephant.y - 30);
+                if (ball) {
+                    ball.setActive(true).setVisible(true);
+                    ball.body.velocity.y = -600;
+                    lastFired = time + 100; // Fire-rate cepat
+                }
+            }
+
+            // Pembersihan Peluru
+            moneyBalls.children.each(function(b) {
+                if (b.active && b.y < 0) { b.setActive(false).setVisible(false); }
+            });
+        }
+
+        function hitResistance(wall, ball) {
+            if (!ball.active) return;
+            ball.setActive(false).setVisible(false);
+            ball.body.velocity.y = 0;
+
+            if (supplyLots > 0) {
+                supplyLots -= 10000;
+                if (supplyLots < 0) supplyLots = 0;
+                supplyText.setText('RETAIL OFFER SUPPLY: ' + supplyLots.toLocaleString('id-ID') + ' LOT');
+                this.cameras.main.shake(80, 0.002); // Efek getar bursa bergejolak
+            }
+
+            // TRIGER BREAKOUT VALID (Jika Suplai Ritel Habis Dimakan di Atas Rp2.350)
+            if (supplyLots <= 0 && currentPrice >= 2350 && !isBreakout) {
+                isBreakout = true;
+                elephant.setActive(false).setVisible(false);
+                
+                rocket.setPosition(elephant.x, elephant.y).setActive(true).setVisible(true);
+
+                priceText.setText('ADRO REAL PRICE: Rp2.600+ 🔥');
+                priceText.setFill('#00ffff');
